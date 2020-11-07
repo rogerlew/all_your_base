@@ -444,21 +444,6 @@ def build_mask(points, georef_fn):
     return -1 * (data / 255.0) + 1
 
 
-def identify_utm(fn):
-    assert _exists(fn), "Cannot open %s" % fn
-
-    ds = gdal.Open(fn)
-    assert ds is not None
-
-    wkt_text = ds.GetProjection()
-    srs = osr.SpatialReference()
-    srs.ImportFromWkt(wkt_text)
-    _utm = get_utm_zone(srs)
-    del ds
-
-    return _utm
-
-
 def get_utm_zone(srs):
     """
     extracts the utm_zone from an osr.SpatialReference object (srs)
@@ -466,12 +451,29 @@ def get_utm_zone(srs):
     returns the utm_zone as an int, returns None if utm_zone not found
     """
     if not isinstance(srs, osr.SpatialReference):
+        if _exists(srs):
+            fn = srs
+            ds = gdal.Open(fn)
+            assert ds is not None
+            srs = osr.SpatialReference()
+
+    if not isinstance(srs, osr.SpatialReference):
         raise TypeError('srs is not a osr.SpatialReference instance')
 
     if srs.IsProjected() != 1:
         return None
 
     projcs = srs.GetAttrValue('projcs')
+    assert 'UTM' in projcs
+
+    datum = None
+    if 'NAD83' in projcs:
+        datum = 'NAD83'
+    elif 'WGS84' in projcs:
+        datum = 'WGS84'
+    elif 'NAD27' in projcs:
+        datum = 'NAD27'
+
     # should be something like NAD83 / UTM zone 11N...
 
     if '/' in projcs:
@@ -490,7 +492,8 @@ def get_utm_zone(srs):
     if utm_zone < 0 or utm_zone > 60:
         return None
 
-    return utm_zone
+    hemisphere = projcs[-1]
+    return datum, utm_zone, hemisphere
 
 
 _AVG_EARTH_RADIUS = 6371  # in km
