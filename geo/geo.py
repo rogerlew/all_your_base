@@ -13,7 +13,7 @@ import xml.etree.ElementTree as ET
 from subprocess import Popen, PIPE
 
 import utm
-from numpy import np
+import numpy as np
 from osgeo import gdal, osr, ogr
 
 from ..all_your_base import isfloat, SCRATCH
