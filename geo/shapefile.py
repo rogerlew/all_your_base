@@ -899,6 +899,7 @@ class Writer:
 
     def __shpRecord(self, s):
         f = self.__getFileObj(self._shp)
+        recNum = self.recNum
         offset = 100 + f.tell()
         # Record number, Content length place holder
         f.write(pack(">2i", self.shpNum, 0))

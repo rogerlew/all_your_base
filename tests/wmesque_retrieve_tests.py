@@ -6,7 +6,7 @@ from os.path import exists as _exists
 import numpy as np
 from numpy.testing import assert_array_equal
 
-from wepppy.all_your_base import wmesque_retrieve, read_arc, read_tif
+from wepppy.all_your_base.geo import wmesque_retrieve, read_arc, read_tif
 
 
 test_dir = 'wmesque_data'

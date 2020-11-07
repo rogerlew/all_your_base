@@ -25,7 +25,7 @@ from osgeo.gdalconst import GA_ReadOnly
 
 import utm
 
-from geo.geo_transformer import GeoTransformer
+from .geo_transformer import GeoTransformer
 
 wgs84_proj4 = '+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs'
 
