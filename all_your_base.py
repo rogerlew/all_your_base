@@ -46,7 +46,7 @@ if not _exists(SCRATCH):
     SCRATCH = '/Users/roger/Downloads'
 
 if not _exists(SCRATCH):
-    SCRATCH = '/workdir'
+    SCRATCH = '/workdir/scratch'
 
 IS_WINDOWS = os.name == 'nt'
 
