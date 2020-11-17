@@ -3,7 +3,7 @@ import requests
 
 def elevationquery(lng, lat):
     url = 'https://wepp1.nkn.uidaho.edu/webservices/elevationquery'
-    r = requests.post(url, params=dict(lat=lat, lng=lng))
+    r = requests.post(url, json=dict(lat=lat, lng=lng))
 
     if r.status_code != 200:
         raise Exception("Encountered error retrieving from elevationquery")
