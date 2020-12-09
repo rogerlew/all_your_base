@@ -184,8 +184,11 @@ class RasterDatasetInterpolator:
                 # nodata = self.band[i].GetNoDataValue()
                 # if nodata is not None:
                 #     data = np.ma.masked_values(data, nodata)
-                func = interpolate.interp2d(_x, _y, _data, kind='cubic')
-                z.append(func(x, y)[0])
+                try:
+                    func = interpolate.interp2d(_x, _y, _data, kind='cubic')
+                    z.append(func(x, y)[0])
+                except:
+                    return self.get_location_info(lng, lat, method='near')
         else:
             x, y = int(round(x)), int(round(y))
 
