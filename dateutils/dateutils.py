@@ -129,7 +129,7 @@ class YearlessDate(object):
         return YearlessDate(d.month, d.day)
 
     def __str__(self):
-        return 'YearlessDate({0.month}, {0.day})'.format(self)
+        return '{0.month}/{0.day}'.format(self)
 
     def __repr__(self):
-        return self.__str__()
+        return 'YearlessDate({0.month}, {0.day})'.format(self)
