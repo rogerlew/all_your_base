@@ -3,7 +3,7 @@ from urllib.request import urlopen
 from ...all_your_base import isfloat
 
 
-wmesque_url = 'https://wepp1.nkn.uidaho.edu/webservices/wmesque/'
+wmesque_url = 'https://wepp.cloud/webservices/wmesque/'
 
 
 def wmesque_retrieve(dataset, extent, fname, cellsize):
