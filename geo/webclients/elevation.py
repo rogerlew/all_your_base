@@ -2,7 +2,7 @@ import requests
 
 
 def elevationquery(lng, lat):
-    url = 'https://wepp1.nkn.uidaho.edu/webservices/elevationquery'
+    url = 'https://wepp.cloud/webservices/elevationquery'
     r = requests.post(url, json=dict(lat=lat, lng=lng))
 
     if r.status_code != 200:
