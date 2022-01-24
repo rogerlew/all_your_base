@@ -128,6 +128,10 @@ class YearlessDate(object):
         d = date(2001, self.month, self.day) - timedelta(1)
         return YearlessDate(d.month, d.day)
 
+    @property
+    def julian(self):
+        return _md_to_julian(self.month, self.day)
+    
     def __str__(self):
         return '{0.month}/{0.day}'.format(self)
 
