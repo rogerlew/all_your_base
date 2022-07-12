@@ -17,6 +17,8 @@ from math import ceil, floor
 # 3rd party modules
 from scipy import interpolate
 
+import numpy as np
+
 from osgeo import gdal
 from osgeo import osr
 from osgeo.gdalconst import GA_ReadOnly
@@ -77,8 +79,8 @@ class RasterDatasetInterpolator:
             self.left, self.upper = self.get_geo_coord(0, 0)
             self.right, self.lower = self.get_geo_coord(ds.RasterXSize, ds.RasterYSize)
 
-        self.proj2wgs_transformer = proj2wgs_transformer = GeoTransformer(src_proj4=self.proj4, dst_proj4=wgs84_proj4)
-        self.wgs2proj_transformer = GeoTransformer(src_proj4=wgs84_proj4, dst_proj4=self.proj4)
+        self.proj2wgs_transformer = proj2wgs_transformer = \
+            GeoTransformer(src_proj4=self.proj4, dst_proj4=wgs84_proj4)
 
         lng0, lat0 = proj2wgs_transformer.transform(self.left, self.upper)
         _, _, self.utm_n, self.utm_h = utm.from_latlon(lat0, lng0)
@@ -96,9 +98,9 @@ class RasterDatasetInterpolator:
         return e, n
 
     def get_px_coord_from_lnglat(self, lng, lat):
-        wgs2proj_transformer = self.wgs2proj_transformer
+        proj2wgs_transformer = self.proj2wgs_transformer
 
-        e, n = wgs2proj_transformer.transform(lng, lat)
+        e, n = proj2wgs_transformer.reverse(lng, lat)
         px, py = self.get_px_coord(e, n)
         return int(px), int(py)
 
@@ -118,6 +120,16 @@ class RasterDatasetInterpolator:
         return self.band[band].GetNoDataValue()
 
     @property
+    def gt0_centroid(self):
+        data = self.band[0].ReadAsArray(0,0, self.ds.RasterXSize, self.ds.RasterYSize) 
+        y = np.zeros(data.shape)
+        y[data > 0] = 1
+        px, py = np.argwhere(y == 1).sum(0)/y.sum()
+        e, n = self.get_geo_coord(px, py)
+        lng, lat = self.proj2wgs_transformer.transform(e, n)
+        return lng, lat
+
+    @property
     def extent(self):
         proj2wgs_transformer = self.proj2wgs_transformer
         ll_left, ll_lower = proj2wgs_transformer.transform(self.left, self.lower)
@@ -129,8 +141,8 @@ class RasterDatasetInterpolator:
         return self.left < e < self.right and self.lower < n < self.upper
 
     def get_location_info(self, lng, lat, method='cubic'):
-        wgs2proj_transformer = self.wgs2proj_transformer
-        e, n = wgs2proj_transformer.transform(lng, lat)
+        proj2wgs_transformer = self.proj2wgs_transformer
+        e, n = proj2wgs_transformer.reverse(lng, lat)
 
         if not (e, n) in self:
             raise RDIOutOfBoundsException

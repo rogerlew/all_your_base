@@ -15,11 +15,15 @@ class GeoTransformer(object):
         self.dst_proj4 = dst_proj4
         self.dst_epsg = dst_epsg
 
-    def transform(self, x, y):
+    def transform(self, x, y, reverse=False):
         src_proj4 = self.src_proj4
         src_epsg = self.src_epsg
         dst_proj4 = self.dst_proj4
         dst_epsg = self.dst_epsg
+
+        if reverse:
+            src_proj4, src_epsg, dst_proj4, dst_epsg = \
+                dst_proj4, dst_epsg, src_proj4, src_epsg
 
         if IS_WINDOWS:
             from pyproj import Proj, transform
@@ -49,16 +53,21 @@ class GeoTransformer(object):
             cmd = ['gdaltransform', '-s_srs', s_srs, '-t_srs', t_srs, '-output_xy']
             if np.isscalar(x):
 
-                p = Popen(cmd, bufsize=0, stdin=PIPE, stdout=PIPE, stderr=STDOUT, universal_newlines=True)
+                p = Popen(cmd, bufsize=0, stdin=PIPE, stdout=PIPE, stderr=STDOUT, 
+                          universal_newlines=True)
                 ret = p.communicate('{x} {y}'.format(x=x, y=y))
                 return tuple(float(v) for v in ret[0].strip().split())
             else:
                 _ret = []
                 for _x, _y in zip(x, y):
-                    p = Popen(cmd, bufsize=0, stdin=PIPE, stdout=PIPE, stderr=STDOUT, universal_newlines=True)
+                    p = Popen(cmd, bufsize=0, stdin=PIPE, stdout=PIPE, stderr=STDOUT, 
+                              universal_newlines=True)
                     ret = p.communicate('{x} {y}'.format(x=_x, y=_y))
                     _ret.append(tuple(float(v) for v in ret[0].strip().split()))
                 return _ret
+
+    def reverse(self, x, y):
+        return transform(x, y, reverse=True)
 
 
 if __name__ == "__main__":
