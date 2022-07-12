@@ -197,12 +197,12 @@ def try_parse(f):
         return f
 
 
-def try_parse_float(f):
+def try_parse_float(f, default=0.0):
     # noinspection PyBroadException
     try:
         return float(f)
     except Exception:
-        return 0.0
+        return default
 
 
 def parse_name(colname):
