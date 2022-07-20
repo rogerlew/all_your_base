@@ -67,7 +67,7 @@ class GeoTransformer(object):
                 return _ret
 
     def reverse(self, x, y):
-        return transform(x, y, reverse=True)
+        return self.transform(x, y, reverse=True)
 
 
 if __name__ == "__main__":
