@@ -16,8 +16,11 @@ import utm
 import numpy as np
 from osgeo import gdal, osr, ogr
 
+from deprecated import deprecated
+
 from ..all_your_base import isfloat, SCRATCH
 from .geo_transformer import GeoTransformer
+from .locationinfo import RasterDatasetInterpolator
 
 gdal.UseExceptions()
 
@@ -60,10 +63,33 @@ def crop_geojson(fn, bbox):
     return js
 
 
+def raster_stacker(src_fn, match_fn, dst_fn):
+    rdi = RasterDatasetInterpolator(match_fn)
+    proj4 = rdi.proj4
+    xres, yres = abs(rdi.transform[1]), abs(rdi.transform[5])
+    xmin, ymin, xmax, ymax = rdi.left, rdi.lower, rdi.right, rdi.upper
+
+    cmd = ['gdalwarp', '-t_srs', proj4, '-tr', xres, yres,
+           '-te', xmin, ymin, xmax, ymax,
+           '-co', 'compress=lzw',
+           src_fn, dst_fn]
+
+    cmd = [str(v) for v in cmd]
+
+    p = Popen(cmd, stdin=PIPE, stdout=PIPE, stderr=PIPE)
+    p.wait()
+
+    assert _exists(dst_fn)
+    
+
+@deprecated
 def warp2match(src_filename, match_filename, dst_filename):
     # Source
     src = gdal.Open(src_filename, gdal.GA_ReadOnly)
     src_proj = src.GetProjection()
+
+    nbands = src.RasterCount
+    dtype = src.GetRasterBand(1).DataType
 
     # We want a section of source that matches this:
     match_ds = gdal.Open(match_filename, gdal.GA_ReadOnly)
@@ -73,7 +99,7 @@ def warp2match(src_filename, match_filename, dst_filename):
     high = match_ds.RasterYSize
 
     # Output / destination
-    dst = gdal.GetDriverByName('GTiff').Create(dst_filename, wide, high, 1, gdal.GDT_Byte)
+    dst = gdal.GetDriverByName('GTiff').Create(dst_filename, wide, high, nbands, dtype)
     dst.SetGeoTransform(match_geotrans)
     dst.SetProjection(match_proj)
 
