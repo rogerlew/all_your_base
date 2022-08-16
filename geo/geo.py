@@ -187,7 +187,7 @@ def wkt_2_proj4(wkt):
     return srs.ExportToProj4().strip()
 
 
-def read_tif(fn, dtype=np.float64):
+def read_tif(fn, dtype=np.float64, band=1):
     """
     use gdal to read an tif file and return the data and the
     transform
@@ -198,7 +198,7 @@ def read_tif(fn, dtype=np.float64):
     assert ds is not None
 
     transform = ds.GetGeoTransform()
-    data = np.array(ds.GetRasterBand(1).ReadAsArray(), dtype=dtype).T
+    data = np.array(ds.GetRasterBand(band).ReadAsArray(), dtype=dtype).T
     wkt_text = ds.GetProjection()
     srs = osr.SpatialReference()
     srs.ImportFromWkt(wkt_text)
