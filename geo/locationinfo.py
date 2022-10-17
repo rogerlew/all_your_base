@@ -132,9 +132,17 @@ class RasterDatasetInterpolator:
     @property
     def extent(self):
         proj2wgs_transformer = self.proj2wgs_transformer
-        ll_left, ll_lower = proj2wgs_transformer.transform(self.left, self.lower)
-        ll_right, ll_upper = proj2wgs_transformer.transform(self.left, self.lower)
-        return ll_left, ll_lower, ll_right, ll_upper
+        xmin, ymin = proj2wgs_transformer.transform(self.left, self.lower)
+        xmax, ymax = proj2wgs_transformer.transform(self.right, self.upper)
+        return xmin, ymin, xmax, ymax
+
+    @property
+    def width(self):
+        return self.ds.RasterXSize
+
+    @property
+    def height(self):
+        return self.ds.RasterYSize
 
     def __contains__(self, en):
         e, n = en
