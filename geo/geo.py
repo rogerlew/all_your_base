@@ -76,10 +76,12 @@ def raster_stacker(src_fn, match_fn, dst_fn):
 
     cmd = [str(v) for v in cmd]
 
-    p = Popen(cmd, stdin=PIPE, stdout=PIPE, stderr=PIPE)
+    _log = open(f'{dst_fn}.log', 'w')
+    p = Popen(cmd, stdin=PIPE, stdout=_log, stderr=_log)
     p.wait()
+    _log.close()
 
-    assert _exists(dst_fn)
+    assert _exists(dst_fn), open(f'{dst_fn}.log').read()
     
 
 @deprecated
