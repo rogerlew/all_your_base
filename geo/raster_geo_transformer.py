@@ -87,7 +87,7 @@ class UtmGeoTransformer:
         self.datum = datum
         self.hemisphere = hemisphere
         self.northern = northern = hemisphere == 'N'
-        self.epsg = utm_srid(utm_zone, datum, hemisphere)
+        self.epsg = utm_srid(utm_zone, hemisphere)
         self.utm_zone = utm_zone
         self.srs_proj4 = srs.ExportToProj4()
 
