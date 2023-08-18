@@ -22,6 +22,11 @@ from ..all_your_base import isfloat, SCRATCH
 from .geo_transformer import GeoTransformer
 from .locationinfo import RasterDatasetInterpolator
 
+import rasterio
+import rasterio.warp
+from rasterio.warp import reproject, Resampling, calculate_default_transform
+
+
 gdal.UseExceptions()
 
 
@@ -61,6 +66,17 @@ def crop_geojson(fn, bbox):
     js['features'] = _features
 
     return js
+
+
+def get_raster_extent(match_fn, wgs=False):
+    rdi = RasterDatasetInterpolator(match_fn)
+    proj4 = rdi.proj4
+    
+    if wgs:
+        extent = rdi.extent
+    else:
+        extent = rdi.left, rdi.lower, rdi.right, rdi.upper
+    return extent
 
 
 def raster_stacker(src_fn, match_fn, dst_fn):

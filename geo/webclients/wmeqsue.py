@@ -6,7 +6,7 @@ from ...all_your_base import isfloat
 wmesque_url = 'https://wepp.cloud/webservices/wmesque/'
 
 
-def wmesque_retrieve(dataset, extent, fname, cellsize):
+def wmesque_retrieve(dataset, extent, fname, cellsize, resample=None):
     global wmesque_url
 
     assert isfloat(cellsize)
@@ -28,9 +28,10 @@ def wmesque_retrieve(dataset, extent, fname, cellsize):
     else:
         raise ValueError('fname must end with .tif, .asc, or .png')
 
-    url = '{wmesque_url}{dataset}/?bbox={extent}&cellsize={cellsize}&format={format}'\
-          .format(wmesque_url=wmesque_url, dataset=dataset,
-                  extent=extent, cellsize=cellsize, format=fmt)
+    url = f'{wmesque_url}{dataset}/?bbox={extent}&cellsize={cellsize}&format={fmt}'
+
+    if resample is not None:
+        url += f'&resample={resample}'
 
     try:
         output = urlopen(url, timeout=60)

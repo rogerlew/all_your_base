@@ -22,6 +22,9 @@ import math
 import random
 import multiprocessing
 
+import json
+import numpy as np
+
 try:
     import win32com.shell.shell as shell
 except:
@@ -51,6 +54,45 @@ if not _exists(SCRATCH):
     SCRATCH = '/workdir/scratch'
 
 IS_WINDOWS = os.name == 'nt'
+
+
+class NumpyEncoder(json.JSONEncoder):
+    """
+    Custom JSONEncoder subclass that knows how to serialize numpy data types.
+
+    Numpy's int64 and float64 types are not natively serializable by Python's json module.
+    This class overrides the `default` method of `json.JSONEncoder` to enable serializing
+    these numpy data types.
+
+    It also converts numpy arrays to lists to ensure they are serializable.
+
+    Usage:
+
+    data = {"array": np.array([1, 2, 3]), "int": np.int64(4), "float": np.float64(5.0)}
+
+    # Use NumpyEncoder while dumping json
+    json_str = json.dumps(data, cls=NumpyEncoder)
+
+    Example:
+
+    >>> import numpy as np
+    >>> import json
+    >>> from your_module import NumpyEncoder
+    >>> data = {"array": np.array([1, 2, 3]), "int": np.int64(4), "float": np.float64(5.0)}
+    >>> json_str = json.dumps(data, cls=NumpyEncoder)
+    >>> print(json_str)
+    {"array": [1, 2, 3], "int": 4, "float": 5.0}
+    """
+
+    def default(self, obj):
+        if isinstance(obj, np.integer):
+            return int(obj)
+        elif isinstance(obj, np.floating):
+            return float(obj)
+        elif isinstance(obj, np.ndarray):
+            return obj.tolist()
+        else:
+            return super(NumpyEncoder, self).default(obj)
 
 
 def make_symlink(src, dst):
