@@ -62,6 +62,7 @@ class RasterDatasetInterpolator:
         self.fname = fname
         self.nbands = nbands = ds.RasterCount
         self.band = [ds.GetRasterBand(i + 1) for i in range(nbands)]
+        self.no_data_values = [band.GetNoDataValue() for band in self.band]
         self.transform = ds.GetGeoTransform()
 
         self.wkt_text = ds.GetProjection()
@@ -220,15 +221,14 @@ class RasterDatasetInterpolator:
             z = []
             for i in range(nbands):
                 _z = self.band[i].ReadAsArray(x, y, 1, 1)
-                nodata = self.band[i].GetNoDataValue()
+                nodata = self.no_data_values[i]  # Get the NoData value for the current band
                 if _z is not None:
-                    # RL- comparison between np.float32 and float seems to be broken
-                    # if _z[0, 0] == nodata:
-                    #     z.append(None)
-                    # else:
-                    z.append(_z[0, 0])
+                    if nodata is not None and _z[0, 0] == nodata:  # Check if the pixel value matches the NoData value
+                        z.append(None)
+                    else:
+                        z.append(_z[0, 0])
                 else:
-                    z.append(float('nan'))
+                    z.append(None)
         
         if nbands == 1:
             return z[0]

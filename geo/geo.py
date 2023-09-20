@@ -15,6 +15,7 @@ from subprocess import Popen, PIPE
 import utm
 import numpy as np
 from osgeo import gdal, osr, ogr
+import subprocess
 
 from deprecated import deprecated
 
@@ -34,6 +35,31 @@ wgs84_proj4 = '+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs'
 wgs84_wkt = 'GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563,AUTHORITY["EPSG","7030"]],'\
             'AUTHORITY["EPSG","6326"]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],'\
             'UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9122"]],AUTHORITY["EPSG","4326"]]'
+
+
+def validate_srs(file_path):
+    """
+    Validates the SRS of a given file using gdalsrsinfo.
+
+    Parameters:
+        file_path (str): Path to the file to validate.
+
+    Returns:
+        bool: True if the SRS is valid, False otherwise.
+    """
+    cmd = ["gdalsrsinfo", "-v", file_path]
+
+    try:
+        result = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=True,
+                                universal_newlines=True)
+
+        if "Validate Succeeds" in result.stdout:
+            return True
+    except subprocess.CalledProcessError:
+        # This block will be executed if gdalsrsinfo returns a non-zero exit status
+        pass
+
+    return False
 
 
 def utm_srid(zone, northern) -> [str, None]:
