@@ -41,7 +41,7 @@ geodata_dir = '/geodata/'
 
 RGBA = namedtuple('RGBA', list('RGBA'))
 RGBA.tohex = lambda this: '#' + ''.join('{:02X}'.format(a) for a in this)
-RGBA.random = lambda: RGBA(random.randint(0, 255), 
+RGBA.random = lambda: RGBA(random.randint(0, 255),
                            random.randint(0, 255), 
                            random.randint(0, 255), 255)
 
