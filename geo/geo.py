@@ -37,6 +37,52 @@ wgs84_wkt = 'GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.2572
             'UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9122"]],AUTHORITY["EPSG","4326"]]'
 
 
+resample_methods = 'near bilinear cubic cubicspline lanczos ' \
+                'average mode max min med q1 q1'.split()
+resample_methods = tuple(resample_methods)
+
+def utm_raster_transform(wgs_extent, src_fn, dst_fn, cellsize, resample='bilinear'):
+    west, south, east, north = wgs_extent
+
+    assert src_fn is not None, 'Failed to download DEM'
+    assert _exists(src_fn), 'Failed to save DEM'
+
+    ul_x, ul_y, utm_number, utm_letter = utm.from_latlon(north, west)
+
+    # bottom right
+    lr_x, lr_y, _, _ = utm.from_latlon(south, east, 
+                                       force_zone_number=utm_number)
+
+    # check size
+    height_px = int((ul_y - lr_y) / cellsize)
+    width_px = int((ul_x - lr_y) / cellsize)
+
+    proj4 = "+proj=utm +zone={zone} +{hemisphere} +datum=WGS84 +ellps=WGS84" \
+            .format(zone=utm_number, hemisphere=('south', 'north')[north > 0])
+
+    assert resample in resample_methods, 'resample method not valid'
+
+    # build command to warp, crop, and scale dataset
+    cmd = "gdalwarp -t_srs '{proj4}' -tr {cellsize} {cellsize} " \
+          "-te {xmin} {ymin} {xmax} {ymax} -r {resample} {src} {dst}".format(
+          proj4=proj4, cellsize=cellsize,
+          xmin=ul_x, xmax=lr_x, ymin=lr_y, ymax=ul_y,
+          resample=resample, src=src_fn, dst=dst_fn)
+    
+    # delete destination file if it exists
+    if os.path.exists(dst_fn):
+        os.remove(dst_fn)
+
+    # run command, check_output returns standard output
+    p = Popen(cmd, shell=True, stdout=PIPE)
+    output = p.stdout \
+              .read() \
+              .decode('utf-8') \
+              .replace('\n','|')
+
+    # check to see if file was created
+    assert os.path.exists(dst_fn), json.dumps(dict(cmd=cmd, output=output))
+
 def validate_srs(file_path):
     """
     Validates the SRS of a given file using gdalsrsinfo.
