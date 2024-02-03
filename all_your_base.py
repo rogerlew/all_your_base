@@ -228,6 +228,9 @@ def isinf(f):
 
 
 def try_parse(f):
+    if isinstance(f, (int, float)):
+        return f
+
     # noinspection PyBroadException
     try:
         ff = float(f)
