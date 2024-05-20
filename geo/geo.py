@@ -284,17 +284,11 @@ def read_tif(fn, dtype=np.float64, band=1):
     """
     assert _exists(fn), "Cannot open %s" % fn
 
-    ds = gdal.Open(fn)
-    assert ds is not None
-
-    transform = ds.GetGeoTransform()
-    data = np.array(ds.GetRasterBand(band).ReadAsArray(), dtype=dtype).T
-    wkt_text = ds.GetProjection()
-    srs = osr.SpatialReference()
-    srs.ImportFromWkt(wkt_text)
-    proj = srs.ExportToProj4().strip()
-
-    del ds
+    ds = rasterio.open(fn)
+    transform = ds.transform.to_gdal()
+    proj = ds.crs.to_proj4()
+    _data = ds.read()
+    data = np.array(_data[0,:,:], dtype=dtype).T
 
     data = np.array(data, dtype=dtype)
 
@@ -308,16 +302,9 @@ def read_arc(fn, dtype=np.float64):
     """
     assert _exists(fn), "Cannot open %s" % fn
 
-    ds = gdal.Open(fn)
-    assert ds is not None
-
-    transform = ds.GetGeoTransform()
-    wkt_text = ds.GetProjection()
-    srs = osr.SpatialReference()
-    srs.ImportFromWkt(wkt_text)
-    proj = srs.ExportToProj4().strip()
-
-    del ds
+    ds = rasterio.open(fn)
+    transform = ds.transform.to_gdal()
+    proj = ds.crs.to_proj4()
 
     with open(fn) as fp:
         data = fp.readlines()
