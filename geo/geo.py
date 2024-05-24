@@ -68,7 +68,7 @@ def utm_raster_transform(wgs_extent, src_fn, dst_fn, cellsize, resample='bilinea
           proj4=proj4, cellsize=cellsize,
           xmin=ul_x, xmax=lr_x, ymin=lr_y, ymax=ul_y,
           resample=resample, src=src_fn, dst=dst_fn)
-    
+
     # delete destination file if it exists
     if os.path.exists(dst_fn):
         os.remove(dst_fn)
@@ -97,7 +97,7 @@ def validate_srs(file_path):
 
     try:
         result = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=True,
-                                universal_newlines=True)
+                                universal_newlines=True, encoding='utf-8')
 
         if "Validate Succeeds" in result.stdout:
             return True
@@ -143,7 +143,7 @@ def crop_geojson(fn, bbox):
 def get_raster_extent(match_fn, wgs=False):
     rdi = RasterDatasetInterpolator(match_fn)
     proj4 = rdi.proj4
-    
+
     if wgs:
         extent = rdi.extent
     else:
@@ -170,7 +170,7 @@ def raster_stacker(src_fn, match_fn, dst_fn):
     _log.close()
 
     assert _exists(dst_fn), open(f'{dst_fn}.log').read()
-    
+
 
 @deprecated
 def warp2match(src_filename, match_filename, dst_filename):
