@@ -286,7 +286,9 @@ def read_tif(fn, dtype=np.float64, band=1):
 
     ds = rasterio.open(fn)
     transform = ds.transform.to_gdal()
-    proj = ds.crs.to_proj4()
+    proj = None
+    if ds.crs:
+        proj = ds.crs.to_proj4()
     _data = ds.read()
     data = np.array(_data[0,:,:], dtype=dtype).T
 
