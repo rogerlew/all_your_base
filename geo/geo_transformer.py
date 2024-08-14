@@ -5,6 +5,16 @@ import numpy as np
 IS_WINDOWS = os.name == 'nt'
 
 
+def _strip_warning(ret):
+    
+    if ret[0].startswith('Warning'):
+        _ret = list(ret)
+        _ret[0] = '\n'.join(ret[0].split('\n')[1:])
+        return _ret
+
+    return ret
+
+
 class GeoTransformer(object):
     def __init__(self, src_proj4=None, src_epsg=None, dst_proj4=None, dst_epsg=None):
         assert src_proj4 or src_epsg
@@ -51,11 +61,13 @@ class GeoTransformer(object):
 
             from subprocess import Popen, PIPE, STDOUT
             cmd = ['gdaltransform', '-s_srs', s_srs, '-t_srs', t_srs, '-output_xy']
+
             if np.isscalar(x):
 
                 p = Popen(cmd, bufsize=0, stdin=PIPE, stdout=PIPE, stderr=STDOUT, 
                           universal_newlines=True)
                 ret = p.communicate('{x} {y}'.format(x=x, y=y))
+                ret = _strip_warning(ret)   
                 return tuple(float(v) for v in ret[0].strip().split())
             else:
                 _ret = []
@@ -63,6 +75,7 @@ class GeoTransformer(object):
                     p = Popen(cmd, bufsize=0, stdin=PIPE, stdout=PIPE, stderr=STDOUT, 
                               universal_newlines=True)
                     ret = p.communicate('{x} {y}'.format(x=_x, y=_y))
+                    ret = _strip_warning(ret)   
                     _ret.append(tuple(float(v) for v in ret[0].strip().split()))
                 return _ret
 
@@ -73,3 +86,5 @@ class GeoTransformer(object):
 if __name__ == "__main__":
     _dst_proj4 = '+proj=lcc +lat_1=25 +lat_2=60 +lat_0=42.5 +lon_0=-100 +x_0=0 +y_0=0 +ellps=WGS84 +units=m +no_defs'
     _wgs_2_lcc = GeoTransformer(src_epsg=4326, dst_proj4=_dst_proj4)
+    e, n = _wgs_2_lcc.transform(-117.0, 47.0)
+    print(e, n)
