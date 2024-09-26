@@ -157,6 +157,9 @@ def raster_stacker(src_fn, match_fn, dst_fn):
     xres, yres = abs(rdi.transform[1]), abs(rdi.transform[5])
     xmin, ymin, xmax, ymax = rdi.left, rdi.lower, rdi.right, rdi.upper
 
+    if _exists(dst_fn):
+        os.remove(dst_fn)
+
     cmd = ['gdalwarp', '-t_srs', proj4, '-tr', xres, yres,
            '-te', xmin, ymin, xmax, ymax,
            '-co', 'compress=lzw',
