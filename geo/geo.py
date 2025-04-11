@@ -221,7 +221,7 @@ def get_raster_extent(match_fn, wgs=False):
     return extent
 
 
-def raster_stacker(src_fn, match_fn, dst_fn):
+def raster_stacker(src_fn, match_fn, dst_fn, resample='near'):
     rdi = RasterDatasetInterpolator(match_fn)
     proj4 = rdi.proj4
     xres, yres = abs(rdi.transform[1]), abs(rdi.transform[5])
@@ -232,7 +232,7 @@ def raster_stacker(src_fn, match_fn, dst_fn):
 
     cmd = ['gdalwarp', '-t_srs', proj4, '-tr', xres, yres,
            '-te', xmin, ymin, xmax, ymax,
-           '-co', 'compress=lzw',
+           '-co', 'compress=lzw', '-r', resample,
            src_fn, dst_fn]
 
     cmd = [str(v) for v in cmd]
