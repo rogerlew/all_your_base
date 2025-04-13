@@ -67,8 +67,13 @@ class GeoTransformer(object):
                 p = Popen(cmd, bufsize=0, stdin=PIPE, stdout=PIPE, stderr=STDOUT, 
                           universal_newlines=True)
                 ret = p.communicate('{x} {y}'.format(x=x, y=y))
-                ret = _strip_warning(ret)   
-                return tuple(float(v) for v in ret[0].strip().split())
+                ret = _strip_warning(ret)
+                try:
+                    return tuple(float(v) for v in ret[0].strip().split())
+                except:
+                    print(f'Error: {ret}')
+                    raise ValueError('gdaltransform failed to transform coordinates. '
+                                     'Check the input coordinates and projection parameters.')
             else:
                 _ret = []
                 for _x, _y in zip(x, y):
@@ -76,7 +81,12 @@ class GeoTransformer(object):
                               universal_newlines=True)
                     ret = p.communicate('{x} {y}'.format(x=_x, y=_y))
                     ret = _strip_warning(ret)   
-                    _ret.append(tuple(float(v) for v in ret[0].strip().split()))
+                    try:
+                        _ret.append(tuple(float(v) for v in ret[0].strip().split()))
+                    except:
+                        print(f'Error: {ret}')
+                        raise ValueError('gdaltransform failed to transform coordinates. '
+                                        'Check the input coordinates and projection parameters.')
                 return _ret
 
     def reverse(self, x, y):
