@@ -96,9 +96,8 @@ def f_esri_gpkg_to_gdb(gpkg_fn, gdb_fn):
         gpkg_fn
     ]
 
-    
     try:
-        result = subprocess.run(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+        result = subprocess.run(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, timeout=600)
         if result.returncode == 0:
             print("Docker command ran successfully:")
             print(result.stdout)
