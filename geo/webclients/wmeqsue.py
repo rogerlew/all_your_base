@@ -41,3 +41,9 @@ def wmesque_retrieve(dataset, extent, fname, cellsize, resample=None):
         raise Exception("Error retrieving: %s" % url)
 
     return 1
+
+if __name__ == "__main__":
+    wmesque_retrieve('ned1/2022',
+                     [-116.42555236816408, 45.233799855252855, -116.32701873779298, 45.303146403608935],
+                     '/home/roger/output.tif',
+                     30.0)

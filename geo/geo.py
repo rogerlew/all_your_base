@@ -221,27 +221,58 @@ def get_raster_extent(match_fn, wgs=False):
 
 
 def raster_stacker(src_fn, match_fn, dst_fn, resample='near'):
-    rdi = RasterDatasetInterpolator(match_fn)
-    proj4 = rdi.proj4
-    xres, yres = abs(rdi.transform[1]), abs(rdi.transform[5])
-    xmin, ymin, xmax, ymax = rdi.left, rdi.lower, rdi.right, rdi.upper
+    """
+    Warps a source raster to match the grid of another raster using rasterio.
 
-    if _exists(dst_fn):
-        os.remove(dst_fn)
+    Args:
+        src_fn (str): Path to the source raster to be warped.
+        match_fn (str): Path to the raster whose grid (CRS, transform, extent)
+                        will be used as the target.
+        dst_fn (str): Path for the output warped raster.
+        resample (str): Resampling algorithm (e.g., 'near', 'bilinear', 'cubic').
+    """
+    # A mapping from string names to rasterio's Resampling methods
+    resampling_methods = {
+        'near': Resampling.nearest,
+        'bilinear': Resampling.bilinear,
+        'cubic': Resampling.cubic,
+        'cubic_spline': Resampling.cubic_spline,
+        'lanczos': Resampling.lanczos,
+        'average': Resampling.average,
+        'mode': Resampling.mode
+    }
+    
+    if resample not in resampling_methods:
+        raise ValueError(f"Invalid resampling method '{resample}'. "
+                         f"Choose from: {list(resampling_methods.keys())}")
 
-    cmd = ['gdalwarp', '-t_srs', proj4, '-tr', xres, yres,
-           '-te', xmin, ymin, xmax, ymax,
-           '-co', 'compress=lzw', '-r', resample,
-           src_fn, dst_fn]
-
-    cmd = [str(v) for v in cmd]
-
-    _log = open(f'{dst_fn}.log', 'w')
-    p = Popen(cmd, stdin=PIPE, stdout=_log, stderr=_log)
-    p.wait()
-    _log.close()
-
-    assert _exists(dst_fn), open(f'{dst_fn}.log').read()
+    # 1. Use the "match" raster to define the output grid.
+    with rasterio.open(match_fn) as match:
+        # Get the metadata to use for the output file.
+        # This ensures the new raster has the exact same grid as the match raster.
+        out_profile = match.profile.copy()
+    
+    # 2. Open the source raster to get its data.
+    with rasterio.open(src_fn) as src:
+        # Update the output profile with source properties and compression.
+        # It's important to use the source's nodata value and data type.
+        out_profile.update({
+            'compress': 'lzw',
+            'nodata': src.nodata,
+            'dtype': src.dtypes[0]
+        })
+        
+        # 3. Create the destination file and perform the reprojection.
+        with rasterio.open(dst_fn, 'w', **out_profile) as dst:
+            reproject(
+                source=rasterio.band(src, 1),
+                destination=rasterio.band(dst, 1),
+                src_transform=src.transform,
+                src_crs=src.crs,
+                dst_transform=match.transform,
+                dst_crs=match.crs,
+                resampling=resampling_methods[resample]
+            )
 
 
 @deprecated
