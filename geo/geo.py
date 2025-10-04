@@ -783,3 +783,53 @@ def crop_and_transform(src, dst, bbox, layer='', cellsize=30, resample=None, fmt
             dst_final = dst3
 
     shutil.copyfile(dst_final, dst)
+
+
+def rasterize_geometry_from_geojson(dem_fn, geometry, dst_fn):
+    import pyproj
+    from rasterio.features import rasterize
+    from shapely.ops import transform as shapely_transform
+
+    # Open the DEM GeoTIFF file
+    with rasterio.open(dem_fn) as dem:
+        # Get the metadata from the DEM
+        transform = dem.transform
+        crs = dem.crs  # This is the UTM CRS of the DEM
+        width = dem.width
+        height = dem.height
+        dtype = rasterio.uint8  # Adjust the dtype as needed
+
+    # Reproject the geometry from WGS84 to the UTM CRS
+    project = pyproj.Transformer.from_crs("EPSG:4326", crs, always_xy=True).transform
+    geometry_utm = shapely_transform(project, geometry)
+
+    # Create an empty raster with the same dimensions as the DEM
+    raster_shape = (height, width)
+    out_raster = np.zeros(raster_shape, dtype=dtype)
+
+    # Convert geometry to the format required for rasterize
+    shapes = [(geometry_utm, 1)]
+
+    # Rasterize the geometry
+    rasterized = rasterize(
+        shapes,
+        out_shape=raster_shape,
+        transform=transform,
+        fill=0,
+        dtype=dtype,
+    )
+
+    # Save the rasterized output to the specified file
+    with rasterio.open(
+        dst_fn,
+        'w',
+        driver='GTiff',
+        height=height,
+        width=width,
+        count=1,
+        dtype=dtype,
+        crs=crs,
+        transform=transform,
+    ) as dst:
+        dst.write(rasterized, 1)
+
