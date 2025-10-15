@@ -28,6 +28,7 @@ import rasterio
 import rasterio.warp
 from rasterio.warp import reproject, Resampling, calculate_default_transform
 
+from wepppy import f_esri as _f_esri
 
 gdal.UseExceptions()
 
@@ -46,29 +47,7 @@ resample_methods = tuple(resample_methods)
 # https://github.com/rogerlew/gdal-grande
 
 def has_f_esri():
-    image_name = "f_esri"
-    try:
-        result = subprocess.run(
-            ["sudo", "docker", "images", "-q", image_name],
-            stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True
-        )
-        if result.stdout.strip():
-            print(f"Docker image '{image_name}' exists.")
-            return True
-        else:
-            print(f"Docker image '{image_name}' does not exist.")
-            return False
-    except subprocess.CalledProcessError as e:
-        print(f"Error occurred: {e}")
-        return False
-
-
-def get_user_group_ids(user, group):
-    # Get user ID
-    uid = subprocess.run(["id", "-u", user], stdout=subprocess.PIPE, text=True).stdout.strip()
-    # Get group ID
-    gid = subprocess.run(["id", "-g", group], stdout=subprocess.PIPE, text=True).stdout.strip()
-    return uid, gid
+    return _f_esri.has_f_esri()
 
 
 def f_esri_gpkg_to_gdb(gpkg_fn, gdb_fn):
@@ -76,39 +55,7 @@ def f_esri_gpkg_to_gdb(gpkg_fn, gdb_fn):
     Runs the docker command to convert a GeoPackage to a FileGDB.
     """
 
-    if _exists(gdb_fn):
-        shutil.rmtree(gdb_fn)
-
-    host_volume = _split(gpkg_fn)[0]
-    gpkg_fn = os.path.abspath(gpkg_fn)
-    gdb_fn = os.path.abspath(gdb_fn)
-
-    # Get the UID and GID for www-data and webgroup
-    uid, gid = get_user_group_ids("www-data", "www-data")
-
-    # Prepare the Docker command
-    command = [
-        "docker", "run", "--rm",
-        "-v", f"{host_volume}:{host_volume}",
-        "--user", f"{uid}:{gid}",
-        "f_esri", "ogr2ogr", "-f", "FileGDB",
-        gdb_fn,
-        gpkg_fn
-    ]
-
-    try:
-        result = subprocess.run(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, timeout=600)
-        if result.returncode == 0:
-            print("Docker command ran successfully:")
-            print(result.stdout)
-        else:
-            print(f"Docker command failed with code {result.returncode}:")
-            print(result.stderr)
-    except subprocess.CalledProcessError as e:
-        print(f"Error occurred while running the Docker command: {e}")
-
-    # zip the gdb to gdb_fn + ".zip"
-    shutil.make_archive(gdb_fn, 'zip', gdb_fn)
+    _f_esri.c2c_gpkg_to_gdb(gpkg_fn, gdb_fn)
 
 def utm_raster_transform(wgs_extent, src_fn, dst_fn, cellsize, resample='bilinear'):
     west, south, east, north = wgs_extent
@@ -832,4 +779,3 @@ def rasterize_geometry_from_geojson(dem_fn, geometry, dst_fn):
         transform=transform,
     ) as dst:
         dst.write(rasterized, 1)
-
